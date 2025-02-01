@@ -1,1 +1,120 @@
+Documentando e Testando sua API Rest com Kotlin
+Documentar e testar sua API REST são passos fundamentais para garantir sua usabilidade e confiabilidade. Vamos explorar como fazer isso em Kotlin, usando Spring Boot e algumas ferramentas populares.
 
+Documentação com Swagger
+Swagger é uma ótima ferramenta para documentar e testar APIs. Vamos adicionar Swagger ao nosso projeto.
+
+Adicionar Dependências Swagger: No arquivo build.gradle.kts (ou build.gradle), adicione as seguintes dependências:
+
+kotlin
+dependencies {
+    implementation("io.springfox:springfox-boot-starter:3.0.0")
+}
+Configurar Swagger: Crie uma classe de configuração para Swagger:
+
+kotlin
+package com.example.demo.config
+
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import springfox.documentation.builders.PathSelectors
+import springfox.documentation.builders.RequestHandlerSelectors
+import springfox.documentation.spi.DocumentationType
+import springfox.documentation.spring.web.plugins.Docket
+import springfox.documentation.swagger2.annotations.EnableSwagger2
+
+@Configuration
+@EnableSwagger2
+class SwaggerConfig {
+    @Bean
+    fun api(): Docket {
+        return Docket(DocumentationType.SWAGGER_2)
+            .select()
+            .apis(RequestHandlerSelectors.basePackage("com.example.demo"))
+            .paths(PathSelectors.any())
+            .build()
+    }
+}
+Acessar a Documentação Swagger: Execute a aplicação e acesse http://localhost:8080/swagger-ui/ para ver a documentação gerada automaticamente.
+
+Testes com JUnit e MockMvc
+Para garantir que sua API funcione conforme o esperado, você pode escrever testes usando JUnit e MockMvc.
+
+Adicionar Dependências de Teste: No arquivo build.gradle.kts (ou build.gradle), adicione as dependências de teste:
+
+kotlin
+dependencies {
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+Escrever Testes Unitários: Vamos criar testes para o controlador de usuários.
+
+kotlin
+package com.example.demo
+
+import com.example.demo.controller.UserController
+import com.example.demo.model.User
+import com.example.demo.repository.UserRepository
+import org.junit.jupiter.api.Test
+import org.mockito.Mockito
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest
+import org.springframework.boot.test.mock.mockito.MockBean
+import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+
+@WebMvcTest(UserController::class)
+class UserControllerTest {
+
+    @Autowired
+    private lateinit var mockMvc: MockMvc
+
+    @MockBean
+    private lateinit var userRepository: UserRepository
+
+    @Test
+    fun `should return list of users`() {
+        Mockito.`when`(userRepository.findAll()).thenReturn(listOf(User(name = "Alice", email = "alice@example.com")))
+
+        mockMvc.perform(get("/users"))
+            .andExpect(status().isOk)
+            .andExpect { content { json("""[{"name":"Alice","email":"alice@example.com"}]""") } }
+    }
+}
+Integração Contínua com GitHub Actions
+Para automatizar a execução dos testes, você pode configurar GitHub Actions.
+
+Adicionar Workflow do GitHub Actions: No seu repositório GitHub, crie um arquivo .github/workflows/ci.yml com o seguinte conteúdo:
+
+yaml
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 11
+      uses: actions/setup-java@v1
+      with:
+        java-version: '11'
+
+    - name: Build with Gradle
+      run: ./gradlew build
+Recapitulando
+Swagger: Documentação da API.
+
+JUnit e MockMvc: Testes unitários para garantir a funcionalidade da API.
+
+GitHub Actions: Integração contínua para automatizar a execução dos testes.
+
+Com esses passos, você estará bem equipado para documentar e testar sua API REST com Kotlin. Se precisar de mais detalhes ou ajuda, estou aqui para ajudar
